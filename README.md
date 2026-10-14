@@ -27,6 +27,20 @@ Diamond City Radio de Fallout es una referencia posible de programación; el cat
 
 ## Comandos y casos de uso
 
+La [especificación de casos de uso](docs/casos-de-uso.md) define actores, precondiciones, disparadores, flujos principales, alternativas, postcondiciones y garantías ante fallos. Incluye requisitos funcionales y trazabilidad hacia historias de usuario.
+
+| Caso | Objetivo |
+|---|---|
+| CU-01 | Iniciar o reanudar la emisora sin conexiones previas. |
+| CU-02 | Incorporar otro servidor a la reproducción actual. |
+| CU-03 | Detener escucha local y pausar solo al salir el último servidor. |
+| CU-04 | Consultar título, artista y estado. |
+| CU-05 | Continuar automáticamente la programación al finalizar una canción. |
+| CU-06 | Recuperar el último punto guardado tras un reinicio. |
+| CU-07 | Supervisar disponibilidad y errores. |
+
+CU-05 es un escenario de soporte disparado por un evento interno; el usuario no ejecuta un comando adicional. Las historias de usuario se utilizarán para planificar el trabajo en GitHub y no sustituyen estos casos.
+
 | Comando | Comportamiento previsto |
 |---|---|
 | `/radio start` | Conecta el bot al canal de voz del usuario. Si es la primera conexión activa, reanuda la emisora; si ya se reproduce, incorpora ese servidor al punto actual. |
@@ -94,7 +108,7 @@ El audio procede de PostgreSQL a través de `radio-service`. No se devuelven URL
 
 ## Selección musical
 
-Al finalizar una canción, el controlador solicita una selección a `radio-service`. El servicio obtiene las canciones disponibles de la emisora, elige una aleatoriamente, actualiza la canción actual y devuelve sus metadatos. Se propone elegir con igual probabilidad; quedan por concretar el tratamiento de un catálogo vacío y los archivos que fallen al reproducirse.
+Al finalizar una canción, el controlador solicita una selección a `radio-service`. El servicio obtiene las canciones disponibles de la emisora, elige una aleatoriamente, actualiza la canción actual y devuelve sus metadatos. Se propone elegir con igual probabilidad. Un catálogo vacío impide el avance y devuelve un error explícito; un archivo que falle no se confirma como reproducido y no provoca un bucle ilimitado de selecciones.
 
 Seleccionar una canción no demuestra que se haya reproducido: el reproductor confirmará el inicio mediante una actualización de estado. El historial detallado y la exclusión de canciones recientes no son requisitos del MVP.
 
@@ -113,47 +127,73 @@ Separar audio y metadatos evita recuperar los binarios en consultas de catálogo
 
 Al pausar se guarda la posición; durante la reproducción se guardarán puntos de recuperación periódicos, con intervalo pendiente de definir. Tras un reinicio se reconstruirá el reproductor desde el último punto guardado, aplicando búsqueda temporal o decodificación desde esa posición. La recuperación puede repetir un pequeño tramo si el proceso termina entre dos puntos de guardado.
 
-Las conexiones de voz deben reconstruirse desde Discord; el estado guardado no demuestra que sigan activas tras un reinicio. Quedan pendientes la detección de desconexiones inesperadas, los fallos al guardar y la validación de búsqueda temporal en el audio.
+Las conexiones de voz deben reconstruirse desde Discord; el estado guardado no demuestra que sigan activas tras un reinicio. Las desconexiones detectadas retiran la conexión del recuento y aplican la regla de última conexión. Si falla el guardado, el punto queda en memoria y se informa; tras una caída solo se recupera el último guardado confirmado. La búsqueda temporal en el audio sigue pendiente de validación.
 
-## API REST inicial
+## API REST
 
-Contrato inicial acordado, pendiente de concretar todos los payloads, errores, autenticación, límites y timeouts:
+La [especificación REST](docs/api-rest.md) define entradas, respuestas, validaciones y errores. Es un contrato del Hito 1, sin implementación desplegada.
 
-| Método y ruta | Función |
-|---|---|
-| `GET /health` | Consultar disponibilidad. |
-| `GET /api/v1/stations` | Listar emisoras; en el MVP habrá una. |
-| `GET /api/v1/stations/{id}/playback` | Consultar canción, posición y estado guardados. |
-| `POST /api/v1/stations/{id}/advance` | Seleccionar la siguiente canción y actualizar la programación. |
-| `PATCH /api/v1/stations/{id}/playback` | Comunicar posición y cambios de estado. |
-| `GET /api/v1/tracks/{id}/audio` | Entregar bytes de audio con el tipo de contenido adecuado. |
+| Método y ruta | Entrada | Salida correcta |
+|---|---|---|
+| `GET /health` | Sin cuerpo. | `200` con status y disponibilidad de PostgreSQL; `503` si no está preparado. |
+| `GET /api/v1/stations` | Sin cuerpo. | `200` con array de emisoras habilitadas. |
+| `GET /api/v1/stations/{id}/playback` | ID de emisora. | `200` con canción, posición registrada, estado y metadatos. |
+| `POST /api/v1/stations/{id}/advance` | JSON con reason initial o track_finished. | `200` con selección aleatoria, posición 0 y estado loading. |
+| `PATCH /api/v1/stations/{id}/playback` | JSON con canción, posición y estado. | `200` con estado actualizado y fecha de guardado. |
+| `GET /api/v1/tracks/{id}/audio` | ID de canción. | `200` con bytes y tipo de contenido del archivo. |
 
-Las operaciones de control utilizan JSON; el endpoint de audio devuelve contenido binario. La posición consultada es la última comunicada por el reproductor y puede tener retraso respecto a la reproducción en memoria.
+Control utiliza JSON; el audio es binario, sin URLs de almacenamiento externo. Las operaciones, salvo health, utilizan una credencial interna propuesta; los usuarios siguen accediendo mediante los comandos de Discord.
 
-Estado orientativo:
+Payload de avance:
+
+```json
+{
+  "reason": "track_finished"
+}
+```
+
+Payload de progreso o pausa:
+
+```json
+{
+  "current_track_id": 42,
+  "position_ms": 65000,
+  "status": "paused"
+}
+```
+
+Respuesta de consulta orientativa:
 
 ```json
 {
   "station_id": 1,
   "current_track_id": 42,
   "position_ms": 65000,
-  "status": "paused"
+  "status": "paused",
+  "track": {
+    "id": 42,
+    "title": "Canción de ejemplo",
+    "artist": "Artista de ejemplo",
+    "duration_ms": 192000,
+    "content_type": "audio/ogg"
+  }
 }
 ```
 
-Actualización orientativa:
+Estados definidos: idle, loading, playing, paused y error. Loading distingue selección e inicio efectivo; la posición es el último punto comunicado y puede tener retraso.
+
+Errores principales: `401` por credencial interna inválida, `404` por recurso inexistente, `409` por catálogo vacío o conflicto de estado, `422` por entrada inválida y `500/503` por fallo interno o dependencia no disponible. Salvo health, siguen el formato:
 
 ```json
 {
-  "current_track_id": 42,
-  "position_ms": 65000,
-  "status": "paused"
+  "error": {
+    "code": "empty_catalog",
+    "message": "La emisora no tiene canciones disponibles."
+  }
 }
 ```
 
-El servicio validará que la actualización corresponda a la canción actual. Tras seleccionar una canción deberá distinguirse su carga del inicio efectivo de reproducción; los estados y transiciones definitivos están pendientes.
-
-También quedan pendientes las garantías ante reintentos del avance para evitar seleccionar dos canciones por una misma petición repetida. No se añade WebSocket entre microservicios en el diseño inicial.
+Solo el controlador común realiza el avance. POST advance no se reintenta automáticamente si se pierde la respuesta; se consulta el estado antes de continuar. La deduplicación completa y la coordinación de réplicas se reservarán para implementación. No se añade WebSocket entre microservicios.
 
 ## Stack inicial
 
@@ -181,10 +221,56 @@ Este entorno permite probar servicios separados, comunicación por red y almacen
 
 Para el mapeo NIST se distinguirán los usuarios consumidores del servicio y el autor como responsable de proveerlo sobre su infraestructura. El operador de red corresponde a la conectividad utilizada; broker y auditor deben analizarse sin inventar organizaciones que no participan. Los papeles no presentes se documentarán explícitamente y, si se propone un escenario futuro, se identificará como hipotético.
 
-## Pendiente para completar el Hito 1
+## Justificación NIST SP 800-145
 
-- Confirmar catálogo inicial.
-- Completar contratos de API, modelo de datos y tratamiento de fallos.
-- Redactar NIST SP 800-145, actores NIST SP 500-292 e impacto económico.
-- Documentar ramas y commits; crear plantillas, historias y GitHub Project agrupado por milestones.
-- Revisar la entrega contra el enunciado.
+Se analiza cómo las características de la nube motivan el proyecto, distinguiendo el diseño del entorno doméstico de sus límites. Docker no acredita por sí solo una nube completa. [Estándar NIST SP 800-145](https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-145.pdf).
+
+| Característica | Aplicación y límite |
+|---|---|
+| Autoservicio bajo demanda | Start incorpora servidores sin intervención del operador y usa conexiones bajo demanda. El aprovisionamiento automático de infraestructura todavía no está implementado. |
+| Acceso amplio a la red | Discord ofrece la interfaz de usuario; API, audio y persistencia se comunican por red. La disponibilidad depende del servidor y su conectividad. |
+| Recursos compartidos | Varias comunidades comparten catálogo, base de datos y reproductor; cada conexión añade tráfico y procesamiento. |
+| Elasticidad rápida | Los servicios se dimensionan por separado; se prevé estudiar réplicas de API/audio. El controlador compartido necesita coordinación y el servidor doméstico tiene capacidad limitada. |
+| Servicio medido | Se prevén conexiones, minutos, peticiones, errores, CPU, RAM, disco y bytes enviados. No se presentan métricas ni facturación como ya implementadas. |
+
+La aplicación tiene orientación SaaS para el consumidor. El despliegue doméstico se considera una simulación; no se declara nube privada NIST plenamente implementada. La [justificación detallada](docs/nist.md) recoge mecanismos previstos y límites.
+
+## Actores NIST SP 500-292
+
+El mapeo es una interpretación del escenario de referencia según el [NIST SP 500-292](https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication500-292.pdf).
+
+| Actor | Asignación y relación |
+|---|---|
+| Consumidor | Comunidades y usuarios que utilizan la radio; no administran sus servicios. |
+| Proveedor | Autor/operador responsable de ofrecer el servicio sobre su servidor doméstico y mantenerlo. |
+| Intermediario / broker | No hay uno independiente. Integrar Discord no convierte automáticamente al proyecto en broker cloud. |
+| Auditor | No existe auditor independiente contratado; las pruebas propias y la revisión académica no se presentan como auditoría cloud. |
+| Operador de red / carrier | Proveedores de conectividad del servidor y de los consumidores, sin inventar empresas concretas. |
+
+Discord es una plataforma externa. Azure y otros proveedores son alternativas futuras, no actores contratados. Los roles ausentes se identifican expresamente; sus responsabilidades y relaciones económicas se detallan en [el análisis NIST](docs/nist.md).
+
+## Impacto económico
+
+El MVP es un prototipo académico sin cobro. El operador asume electricidad, almacenamiento, conectividad y mantenimiento aunque utilice hardware propio. Los consumidores emplean su conexión para acceder mediante Discord.
+
+Los costes dependen del catálogo, número de conexiones, horas de emisión y recursos medidos. Compartir reproductor evita preparar una programación por servidor, pero requiere enviar audio a cada conexión. Pausar sin conexiones reduce emisión y transferencia; no elimina el consumo base del servidor.
+
+Energía estimada = potencia media medida × horas encendido. Transferencia útil aproximada = bitrate × tiempo × conexiones, con conversión de bits a bytes y overhead adicional. No se atribuyen importes sin medidas y tarifas. El [análisis económico](docs/nist.md) especifica métricas y responsabilidades por actor.
+
+## Gestión del desarrollo
+
+La [guía de contribución](CONTRIBUTING.md) define main estable, ramas feature/docs/fix e integración mediante Pull Requests. Se utilizan commits semánticos de tipo feat, fix, docs, refactor, test y chore.
+
+Están preparadas la [plantilla de historia de usuario](.github/ISSUE_TEMPLATE/user_story.md) y la [plantilla de Pull Request](.github/PULL_REQUEST_TEMPLATE.md). Las historias deben incluir criterios observables, tareas técnicas, etiqueta user-story y trazabilidad a los casos de uso.
+
+El [backlog](docs/backlog.md) contiene ocho historias como Issues reales, con la etiqueta user-story, criterios de aceptación y tareas técnicas. Las [tres tareas del Hito 1](https://github.com/Wid4er/CC-DASRadio/milestone/1) se agrupan en su milestone de definición y gestión. Las historias de funcionalidad permanecen abiertas y pendientes de implementación.
+
+El [Project CC-DASRadio](https://github.com/users/Wid4er/projects/1/views/2) está activo con once Issues, una vista agrupada por Milestone y los estados Backlog, Ready, In Progress, In Review y Done. Las ocho historias funcionales forman el Backlog; las tres tareas de entrega se siguen en el milestone del Hito 1.
+
+La [PR #12](https://github.com/Wid4er/CC-DASRadio/pull/12) reúne esta documentación y las plantillas desde la rama docs/hito-1. Su integración incorpora a main los entregables revisados; las historias funcionales no se cierran por entregar documentación.
+
+## Entrega del Hito 1 y decisiones posteriores
+
+La entrega incluye definición y alcance, casos de uso formales, arquitectura, persistencia, API REST, NIST, análisis económico y configuración de la gestión en GitHub. La revisión documental verifica ejemplos JSON, enlaces locales, trazabilidad RF/CU y coherencia con el enunciado.
+
+Para los hitos de implementación quedan el catálogo definitivo, versiones del stack, formato y límites de audio, intervalos de guardado, timeouts, deduplicación y pruebas de reproducción y recuperación. Estas decisiones no implican entregar una radio funcional durante el Hito 1.
