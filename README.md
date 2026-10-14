@@ -265,11 +265,13 @@ Están preparadas la [plantilla de historia de usuario](.github/ISSUE_TEMPLATE/u
 
 El [backlog](docs/backlog.md) contiene ocho historias como Issues reales, con la etiqueta user-story, criterios de aceptación y tareas técnicas. Las [tres tareas del Hito 1](https://github.com/Wid4er/CC-DASRadio/milestone/1) se agrupan en su milestone de definición y gestión. Las historias de funcionalidad permanecen abiertas y pendientes de implementación.
 
-El GitHub Project y su vista agrupada por milestones están pendientes de habilitar el acceso a Projects. La creación de Issues y milestone ya está verificada.
+El [Project CC-DASRadio](https://github.com/users/Wid4er/projects/1/views/2) está activo con once Issues, una vista agrupada por Milestone y los estados Backlog, Ready, In Progress, In Review y Done. Las ocho historias están en Backlog y las tres tareas del Hito 1 en In Review.
+
+La [PR #12](https://github.com/Wid4er/CC-DASRadio/pull/12) publica esta documentación y las plantillas desde la rama docs/hito-1. Sigue pendiente de revisión e integración en main; las tareas del hito no se dan por terminadas antes de esa revisión.
 
 ## Pendiente para completar el Hito 1
 
 - Confirmar catálogo inicial.
 - Revisar casos de uso, API, modelo de datos y límites NIST contra el enunciado.
-- Completar GitHub Project y vista agrupada por milestones con los Issues existentes.
+- Revisar e integrar la PR documental y verificar las tres tareas del milestone.
 - Revisar la entrega contra el enunciado.
