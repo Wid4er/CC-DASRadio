@@ -265,13 +265,12 @@ Están preparadas la [plantilla de historia de usuario](.github/ISSUE_TEMPLATE/u
 
 El [backlog](docs/backlog.md) contiene ocho historias como Issues reales, con la etiqueta user-story, criterios de aceptación y tareas técnicas. Las [tres tareas del Hito 1](https://github.com/Wid4er/CC-DASRadio/milestone/1) se agrupan en su milestone de definición y gestión. Las historias de funcionalidad permanecen abiertas y pendientes de implementación.
 
-El [Project CC-DASRadio](https://github.com/users/Wid4er/projects/1/views/2) está activo con once Issues, una vista agrupada por Milestone y los estados Backlog, Ready, In Progress, In Review y Done. Las ocho historias están en Backlog y las tres tareas del Hito 1 en In Review.
+El [Project CC-DASRadio](https://github.com/users/Wid4er/projects/1/views/2) está activo con once Issues, una vista agrupada por Milestone y los estados Backlog, Ready, In Progress, In Review y Done. Las ocho historias funcionales forman el Backlog; las tres tareas de entrega se siguen en el milestone del Hito 1.
 
-La [PR #12](https://github.com/Wid4er/CC-DASRadio/pull/12) publica esta documentación y las plantillas desde la rama docs/hito-1. Sigue pendiente de revisión e integración en main; las tareas del hito no se dan por terminadas antes de esa revisión.
+La [PR #12](https://github.com/Wid4er/CC-DASRadio/pull/12) reúne esta documentación y las plantillas desde la rama docs/hito-1. Su integración incorpora a main los entregables revisados; las historias funcionales no se cierran por entregar documentación.
 
-## Pendiente para completar el Hito 1
+## Entrega del Hito 1 y decisiones posteriores
 
-- Confirmar catálogo inicial.
-- Revisar casos de uso, API, modelo de datos y límites NIST contra el enunciado.
-- Revisar e integrar la PR documental y verificar las tres tareas del milestone.
-- Revisar la entrega contra el enunciado.
+La entrega incluye definición y alcance, casos de uso formales, arquitectura, persistencia, API REST, NIST, análisis económico y configuración de la gestión en GitHub. La revisión documental verifica ejemplos JSON, enlaces locales, trazabilidad RF/CU y coherencia con el enunciado.
+
+Para los hitos de implementación quedan el catálogo definitivo, versiones del stack, formato y límites de audio, intervalos de guardado, timeouts, deduplicación y pruebas de reproducción y recuperación. Estas decisiones no implican entregar una radio funcional durante el Hito 1.

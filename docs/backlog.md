@@ -33,9 +33,9 @@ Estas tareas se asocian al milestone del Hito 1. Las historias de funcionalidad 
 
 [Project CC-DASRadio — Hito 1 y backlog](https://github.com/users/Wid4er/projects/1/views/2).
 
-El tablero tiene once Issues verificadas y una tabla agrupada por Milestone, con Status. Las ocho historias están en Backlog; las tres tareas del Hito 1 están en In Review. Las historias de implementación no tienen todavía milestone futuro.
+El tablero tiene once Issues verificadas y una tabla agrupada por Milestone, con Status. Las ocho historias están en Backlog; las tres tareas de entrega corresponden al Hito 1 y se cierran al verificar sus criterios. Las historias de implementación no tienen todavía milestone futuro.
 
-Estados disponibles: Backlog, Ready, In Progress, In Review y Done. La [PR #12](https://github.com/Wid4er/CC-DASRadio/pull/12) entrega documentación y plantillas; queda pendiente de revisión e integración. No se cierran historias de funcionalidad por documentarlas.
+Estados disponibles: Backlog, Ready, In Progress, In Review y Done. La [PR #12](https://github.com/Wid4er/CC-DASRadio/pull/12) entrega documentación y plantillas y vincula el cierre de las tareas H1 a su integración. No se cierran historias de funcionalidad por documentarlas.
 
 ## Uso individual
 

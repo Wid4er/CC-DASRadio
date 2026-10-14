@@ -33,7 +33,7 @@ Los casos de uso documentan interacciones; las historias planifican incrementos 
 
 El milestone del Hito 1 agrupa entregables de definición y configuración. Las historias de implementación forman el backlog, sin dar su funcionalidad por terminada en este hito. No crear hitos futuros hasta disponer de sus enunciados.
 
-El [GitHub Project](https://github.com/users/Wid4er/projects/1/views/2) tiene una vista agrupada por Milestone y estados Backlog, Ready, In Progress, In Review y Done. Las [historias y tareas](docs/backlog.md) están registradas como Issues. Las historias funcionales permanecen en Backlog y los entregables documentales en In Review hasta verificar su entrega.
+El [GitHub Project](https://github.com/users/Wid4er/projects/1/views/2) tiene una vista agrupada por Milestone y estados Backlog, Ready, In Progress, In Review y Done. Las [historias y tareas](docs/backlog.md) están registradas como Issues. Las historias funcionales permanecen en Backlog; una entrega pasa por In Review y solo llega a Done cuando sus criterios están verificados.
 
 ## Validación de cambios
 
