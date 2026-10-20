@@ -29,11 +29,28 @@ Los IDs US-06 y US-07 se reservan para funciones excluidas o futuras: salto glob
 
 Estas tareas se asocian al milestone del Hito 1. Las historias de funcionalidad permanecen en el backlog sin inventar milestones futuros ni exigir su implementación en este hito.
 
+## Entregables del Hito 2
+
+[Milestone Hito 2 — Empaquetado, entorno local y CI](https://github.com/Wid4er/CC-DASRadio/milestone/2). El [plan de ejecución](hito-2.md) detalla entregables, dependencias y primer objetivo verificable.
+
+| Tarea técnica | Issue |
+|---|---|
+| H2-00: Planificación y trazabilidad | [#13](https://github.com/Wid4er/CC-DASRadio/issues/13) |
+| H2-01: API y persistencia PostgreSQL | [#14](https://github.com/Wid4er/CC-DASRadio/issues/14) |
+| H2-02: Cliente Discord e integración | [#15](https://github.com/Wid4er/CC-DASRadio/issues/15) |
+| H2-03: Dockerfiles de producción | [#16](https://github.com/Wid4er/CC-DASRadio/issues/16) |
+| H2-04: Compose, redes y volumen | [#17](https://github.com/Wid4er/CC-DASRadio/issues/17) |
+| H2-05: Linters y pruebas | [#18](https://github.com/Wid4er/CC-DASRadio/issues/18) |
+| H2-06: CI y publicación en GHCR | [#19](https://github.com/Wid4er/CC-DASRadio/issues/19) |
+| H2-07: Documentación y verificación de entrega | [#20](https://github.com/Wid4er/CC-DASRadio/issues/20) |
+
+Las tareas tienen criterios de aceptación, checklist técnico y etiqueta hito-2. Enlazan las historias originales cuando corresponde; completarlas no cierra automáticamente esas historias. H2-00 se revisa mediante PR de planificación y H2-01 es la primera tarea de implementación preparada.
+
 ## Tablero
 
 [Project CC-DASRadio — Hito 1 y backlog](https://github.com/users/Wid4er/projects/1/views/2).
 
-El tablero tiene once Issues verificadas y una tabla agrupada por Milestone, con Status. Las ocho historias están en Backlog; las tres tareas de entrega corresponden al Hito 1 y se cierran al verificar sus criterios. Las historias de implementación no tienen todavía milestone futuro.
+El tablero tiene diecinueve Issues y una tabla agrupada por Milestone, con Status. Las ocho historias originales siguen abiertas en Backlog; las tres tareas del Hito 1 están cerradas en Done. Las ocho tareas técnicas del Hito 2 se agrupan en su propio milestone. Las historias originales todavía no tienen milestone asignado: su cierre se evaluará según sus criterios completos.
 
 Estados disponibles: Backlog, Ready, In Progress, In Review y Done. La [PR #12](https://github.com/Wid4er/CC-DASRadio/pull/12) entrega documentación y plantillas y vincula el cierre de las tareas H1 a su integración. No se cierran historias de funcionalidad por documentarlas.
 
