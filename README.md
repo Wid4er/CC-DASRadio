@@ -2,7 +2,7 @@
 
 Plataforma de radio musical automática para Discord. Una emisora selecciona aleatoriamente canciones de su catálogo y comparte la misma reproducción entre los servidores conectados.
 
-El nombre acordado es **CC-DASRadio**. El Hito 1 de definición y arquitectura está cerrado. El **Hito 2: empaquetado, entorno local e integración continua** está en planificación; las capacidades siguientes describen el diseño previsto, todavía sin implementación validada. El [plan del Hito 2](docs/hito-2.md) define tareas, dependencias y evidencias de entrega.
+El nombre acordado es **CC-DASRadio**. El Hito 1 de definición y arquitectura está cerrado. El **Hito 2: empaquetado, entorno local e integración continua** tiene un primer incremento con API, PostgreSQL y un cliente Discord para `/radio now`. La [guía de desarrollo local](docs/desarrollo-local.md) explica cómo arrancar, configurar el bot y ejecutar las pruebas. El [plan del Hito 2](docs/hito-2.md) recoge el resto del trabajo; los apartados de reproducción siguientes describen el diseño previsto y todavía no acreditan reproducción de voz.
 
 ## Problema y usuarios objetivo
 
@@ -131,7 +131,7 @@ Las conexiones de voz deben reconstruirse desde Discord; el estado guardado no d
 
 ## API REST
 
-La [especificación REST](docs/api-rest.md) define entradas, respuestas, validaciones y errores. Es un contrato del Hito 1, sin implementación desplegada.
+La [especificación REST](docs/api-rest.md) define entradas, respuestas, validaciones y errores. El contrato del Hito 1 está implementado en la API local del primer incremento del Hito 2; la reproducción de voz sigue pendiente.
 
 | Método y ruta | Entrada | Salida correcta |
 |---|---|---|
@@ -203,7 +203,7 @@ Solo el controlador común realiza el avance. POST advance no se reintenta autom
 | `radio-service` | Python y FastAPI | API de catálogo, programación y entrega de audio separada del cliente. |
 | Persistencia | PostgreSQL | Metadatos, binarios y estado recuperable en una misma base de datos. |
 
-El stack está pendiente de fijar versiones y validar reproducción en dos servidores, compatibilidad de voz y DAVE, carga de binarios y reanudación desde una posición. Los detalles de decodificación y los despliegues en contenedores se concretarán posteriormente.
+El primer incremento fija Python 3.13, Node 24 y las dependencias de API y cliente mediante locks e imágenes por digest; véase la [guía local](docs/desarrollo-local.md). API, audio binario y estado persistido se han probado con PostgreSQL. Quedan por implementar y validar voz, DAVE, reproducción compartida y búsqueda temporal del reproductor; @discordjs/voice todavía no se incorpora a este cliente de consulta.
 
 Referencias de diseño:
 
@@ -273,4 +273,4 @@ La [PR #12](https://github.com/Wid4er/CC-DASRadio/pull/12) integró en main la d
 
 La entrega incluye definición y alcance, casos de uso formales, arquitectura, persistencia, API REST, NIST, análisis económico y configuración de la gestión en GitHub. La revisión documental verifica ejemplos JSON, enlaces locales, trazabilidad RF/CU y coherencia con el enunciado.
 
-Para los hitos de implementación quedan el catálogo definitivo, versiones del stack, formato y límites de audio, intervalos de guardado, timeouts, deduplicación y pruebas de reproducción y recuperación. Estas decisiones no implican entregar una radio funcional durante el Hito 1.
+El Hito 2 incorpora progresivamente la implementación. Quedan el catálogo definitivo, dependencias y formato de voz, límites de audio, intervalos de guardado, deduplicación y pruebas de reproducción y recuperación del reproductor. El primer incremento y sus instrucciones están en la [guía local](docs/desarrollo-local.md). Estas decisiones no implicaban entregar una radio funcional durante el Hito 1.

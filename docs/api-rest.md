@@ -1,6 +1,6 @@
 # API REST — Contrato del Hito 1
 
-Interfaz interna de radio-service consumida por discord-service. Es una especificación de diseño, no una API desplegada. Control y metadatos usan JSON; el audio se devuelve como bytes. Identificadores de ejemplo y canciones son ficticios.
+Interfaz interna de radio-service consumida por discord-service. El contrato se definió en el Hito 1 y sus seis rutas están implementadas en el primer incremento del Hito 2; véase la [guía local](desarrollo-local.md). No hay un despliegue público ni reproducción de voz validada. Control y metadatos usan JSON; el audio se devuelve como bytes. Identificadores de ejemplo y canciones son ficticios.
 
 ## Convenciones
 

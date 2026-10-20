@@ -2,7 +2,7 @@
 
 El enunciado «Empaquetado Cloud Native, Entorno Local e Integración Continua (CI)» exige imágenes de producción para los microservicios, un entorno Compose de al menos tres contenedores y CI que valide y publique imágenes en GHCR.
 
-Este documento organiza el trabajo pendiente. El Hito 1 está cerrado y la radio todavía no está implementada. La funcionalidad descrita aquí es la adaptación propuesta para disponer de componentes reales que empaquetar; no se atribuye al enunciado una exigencia literal de terminar todas las historias del MVP.
+Este documento organiza el trabajo del hito. El Hito 1 está cerrado. El primer incremento implementa la API, PostgreSQL y el cliente de consulta /radio now; el [estado y la ejecución local](desarrollo-local.md) distinguen lo disponible de la reproducción de voz pendiente. La funcionalidad descrita aquí es la adaptación propuesta para disponer de componentes reales que empaquetar; no se atribuye al enunciado una exigencia literal de terminar todas las historias del MVP.
 
 Seguimiento: [milestone Hito 2](https://github.com/Wid4er/CC-DASRadio/milestone/2), [Project agrupado por Milestone](https://github.com/users/Wid4er/projects/1/views/2) y [backlog](backlog.md).
 
@@ -52,7 +52,7 @@ El objetivo parcial es ejecutar docker compose up --build y comprobar la API con
 
 ## Integración con Discord y pruebas
 
-El cliente conserva las decisiones del Hito 1: start, stop y now; un reproductor compartido; incorporación al punto actual; pausa al salir la última conexión y recuperación desde el punto guardado. Solo radio-service accede a PostgreSQL.
+El cliente se construye de forma incremental: primero now y comunicación real con la API, después start, stop y reproducción. El objetivo final conserva las decisiones del Hito 1: un reproductor compartido, incorporación al punto actual, pausa al salir la última conexión y recuperación desde el punto guardado. Solo radio-service accede a PostgreSQL.
 
 Las pruebas unitarias ejercitarán la selección, errores y transiciones del controlador. Las de integración utilizarán PostgreSQL y HTTP reales con Discord simulado, sin depender de credenciales externas para ejecutarse en CI. La reproducción efectiva y la escucha en varios servidores tendrán comprobación manual con un bot de pruebas.
 

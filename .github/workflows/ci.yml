@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main, docs/hito-2]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      POSTGRES_DB: dasradio
+      POSTGRES_USER: dasradio
+      POSTGRES_PASSWORD: ci-only-password
+      SERVICE_TOKEN: ci-only-token
+      COMPOSE_PROFILES: ""
+      SEED_DEMO: "true"
+      HADOLINT_IMAGE: hadolint/hadolint@sha256:32dac94127fd60b7b7e3fbfc65e1383b9b5e25c9bfd7b8536de7a539fe68a12d
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Validate Compose
+        run: docker compose -f compose.yaml -f compose.test.yaml config --quiet
+      - name: Lint Dockerfiles
+        run: |
+          docker run --rm -i "$HADOLINT_IMAGE" hadolint - < radio-service/Dockerfile
+          docker run --rm -i "$HADOLINT_IMAGE" hadolint - < discord-service/Dockerfile
+      - name: Build production images and check TypeScript
+        run: docker compose build radio-service discord-service
+      - name: Lint Python and run unit and PostgreSQL integration tests
+        run: docker compose -f compose.yaml -f compose.test.yaml run --build --rm radio-tests
+      - name: Start API and check readiness
+        run: docker compose up -d --wait radio-service
+      - name: Check Discord service to API communication without a Discord token
+        run: docker compose run --rm --no-deps discord-service node dist/check-api.js
+      - name: Stop test environment
+        if: always()
+        run: docker compose -f compose.yaml -f compose.test.yaml down --remove-orphans
