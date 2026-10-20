@@ -2,7 +2,7 @@
 
 Plataforma de radio musical automática para Discord. Una emisora selecciona aleatoriamente canciones de su catálogo y comparte la misma reproducción entre los servidores conectados.
 
-El nombre acordado es **CC-DASRadio**. El Hito 1 de definición y arquitectura está cerrado. El **Hito 2: empaquetado, entorno local e integración continua** está en planificación; las capacidades siguientes describen el diseño previsto, todavía sin implementación validada. El [plan del Hito 2](docs/hito-2.md) define tareas, dependencias y evidencias de entrega.
+El nombre acordado es **CC-DASRadio**. El Hito 1 de definición y arquitectura está cerrado. El **Hito 2: empaquetado, entorno local e integración continua** tiene un primer incremento con API, PostgreSQL y un cliente Discord para `/radio now`. La [guía de desarrollo local](docs/desarrollo-local.md) explica cómo arrancar, configurar el bot y ejecutar las pruebas. El [plan del Hito 2](docs/hito-2.md) recoge el resto del trabajo; los apartados de reproducción siguientes describen el diseño previsto y todavía no acreditan reproducción de voz.
 
 ## Problema y usuarios objetivo
 
