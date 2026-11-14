@@ -54,6 +54,10 @@ services:
     build:
       context: ./discord-service
       target: runtime
+    stop_grace_period: 30s
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
     environment:
       RADIO_SERVICE_URL: http://radio-service:8000
       SERVICE_TOKEN: ${SERVICE_TOKEN:?Configura SERVICE_TOKEN en .env}
@@ -66,6 +70,32 @@ services:
         condition: service_healthy
     networks:
       - control
+
+  web-service:
+    image: cc-dasradio/web-service:local
+    build:
+      context: ./web-service
+      target: runtime
+    environment:
+      RADIO_SERVICE_URL: http://radio-service:8000
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?Configura SERVICE_TOKEN en .env}
+      STATION_ID: ${STATION_ID:-1}
+    depends_on:
+      radio-service:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:8080"
+    networks:
+      - control
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
 
 networks:
   backend:
