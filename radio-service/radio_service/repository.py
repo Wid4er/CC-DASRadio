@@ -3,6 +3,7 @@ from .domain import RadioError, choose_track, validate_progress
 
 PLAYBACK_QUERY = """
 SELECT p.station_id, p.current_track_id, p.position_ms, p.status, p.updated_at,
+       p.intermission_remaining_ms,
        t.title, t.artist, t.duration_ms, a.content_type
 FROM station_playback p
 JOIN stations s ON s.id = p.station_id
@@ -17,7 +18,8 @@ def playback_payload(row):
         raise RadioError(404, "station_not_found", "No se encuentra la emisora.")
     result = {
         key: row[key]
-        for key in ("station_id", "current_track_id", "position_ms", "status", "updated_at")
+        for key in ("station_id", "current_track_id", "position_ms", "status", "updated_at",
+                    "intermission_remaining_ms")
     }
     result["track"] = None
     if row["current_track_id"] is not None:
@@ -50,7 +52,7 @@ class RadioRepository:
         if station is None:
             raise RadioError(404, "station_not_found", "No se encuentra la emisora.")
 
-    def advance(self, station_id: int, reason: str):
+    def advance(self, station_id: int, reason: str, intermission_remaining_ms=0):
         with self.database.connect() as connection:
             self.lock_station(connection, station_id)
             state = connection.execute(PLAYBACK_QUERY, (station_id,)).fetchone()
@@ -65,12 +67,14 @@ class RadioRepository:
             track_id = choose_track([row["id"] for row in candidates])
             connection.execute(
                 "UPDATE station_playback SET current_track_id = %s, position_ms = 0, "
-                "status = 'loading', updated_at = now() WHERE station_id = %s",
-                (track_id, station_id),
+                "status = 'loading', intermission_remaining_ms = %s, "
+                "updated_at = now() WHERE station_id = %s",
+                (track_id, intermission_remaining_ms, station_id),
             )
             return playback_payload(connection.execute(PLAYBACK_QUERY, (station_id,)).fetchone())
 
-    def progress(self, station_id: int, track_id: int, position: int, status: str):
+    def progress(self, station_id: int, track_id: int, position: int, status: str,
+                 intermission_remaining_ms=None):
         with self.database.connect() as connection:
             self.lock_station(connection, station_id)
             state = connection.execute(PLAYBACK_QUERY, (station_id,)).fetchone()
@@ -78,10 +82,12 @@ class RadioRepository:
                 raise RadioError(409, "state_conflict", "La canción no es la selección actual.")
             validate_progress(state["status"], status, position, state["duration_ms"])
             row = connection.execute(
-                "UPDATE station_playback SET position_ms = %s, status = %s, updated_at = now() "
+                "UPDATE station_playback SET position_ms = %s, status = %s, "
+                "intermission_remaining_ms = COALESCE(%s, intermission_remaining_ms), "
+                "updated_at = now() "
                 "WHERE station_id = %s RETURNING station_id, current_track_id, position_ms, "
-                "status, updated_at",
-                (position, status, station_id),
+                "status, updated_at, intermission_remaining_ms",
+                (position, status, intermission_remaining_ms, station_id),
             ).fetchone()
             return row
 

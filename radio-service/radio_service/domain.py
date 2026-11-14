@@ -20,7 +20,7 @@ def validate_progress(current_status: str, status: str, position: int, duration:
     transitions = {
         "loading": {"loading", "playing", "paused", "error"},
         "playing": {"playing", "paused", "error"},
-        "paused": {"paused", "playing", "error"},
+        "paused": {"paused", "loading", "playing", "error"},
         "error": {"error", "loading", "paused"},
     }
     if status not in transitions.get(current_status, set()):

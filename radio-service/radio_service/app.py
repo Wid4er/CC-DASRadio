@@ -1,6 +1,8 @@
+import asyncio
 import logging
 import secrets
-from contextlib import asynccontextmanager
+import uuid
+from contextlib import asynccontextmanager, suppress
 from typing import Annotated, Literal
 
 import psycopg
@@ -12,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .database import Database
 from .domain import RadioError
+from .playback import PlaybackController
 from .repository import RadioRepository
 from .seed import seed
 from .settings import Settings
@@ -33,6 +36,11 @@ class Progress(BaseModel):
     status: Literal["loading", "playing", "paused", "error"]
 
 
+class Listener(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    kind: Literal["web", "discord"] = "web"
+
+
 def error_response(status, code, message):
     headers = {"WWW-Authenticate": "Bearer"} if status == 401 else None
     return JSONResponse(
@@ -46,13 +54,26 @@ def create_app(settings: Settings | None = None):
     settings = settings or Settings.from_env()
     database = Database(settings.database_url)
     repository = RadioRepository(database)
+    controller = PlaybackController(repository)
+
+    async def update_playback():
+        while True:
+            await asyncio.to_thread(controller.tick)
+            await asyncio.sleep(0.25)
 
     @asynccontextmanager
     async def lifespan(_app):
         database.migrate()
         if settings.seed_demo:
             seed(database)
-        yield
+        timer = asyncio.create_task(update_playback())
+        try:
+            yield
+        finally:
+            timer.cancel()
+            with suppress(asyncio.CancelledError):
+                await timer
+            await asyncio.to_thread(controller.close)
 
     app = FastAPI(title="CC-DASRadio", version="0.1.0", lifespan=lifespan)
 
@@ -106,13 +127,33 @@ def create_app(settings: Settings | None = None):
 
     @router.post("/stations/{station_id}/advance")
     def advance(station_id: PositiveId, payload: Advance):
-        return repository.advance(station_id, payload.reason)
+        return controller.external_change(
+            station_id, lambda: repository.advance(station_id, payload.reason)
+        )
 
     @router.patch("/stations/{station_id}/playback")
     def progress(station_id: PositiveId, payload: Progress):
-        return repository.progress(
-            station_id, payload.current_track_id, payload.position_ms, payload.status
+        return controller.external_change(
+            station_id, lambda: repository.progress(
+                station_id, payload.current_track_id, payload.position_ms, payload.status
+            )
         )
+
+    @router.get("/stations/{station_id}/live")
+    def live(station_id: PositiveId):
+        return controller.call(station_id, "snapshot")
+
+    @router.post("/stations/{station_id}/listeners", status_code=201)
+    def join(station_id: PositiveId, payload: Listener):
+        return controller.call(station_id, "join", payload.kind)
+
+    @router.post("/stations/{station_id}/listeners/{listener_id}/heartbeat")
+    def heartbeat(station_id: PositiveId, listener_id: uuid.UUID):
+        return controller.call(station_id, "heartbeat", str(listener_id))
+
+    @router.post("/stations/{station_id}/listeners/{listener_id}/leave")
+    def leave(station_id: PositiveId, listener_id: uuid.UUID):
+        return controller.call(station_id, "leave", str(listener_id))
 
     @router.get("/tracks/{track_id}/audio")
     def audio(track_id: PositiveId):
