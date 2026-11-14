@@ -1,5 +1,5 @@
-import { REST, Routes } from "discord.js";
-import { radioCommand } from "./commands.js";
+import { REST } from "discord.js";
+import { ensureGlobalRadioCommand } from "./command-registration.js";
 import { required } from "./config.js";
 
 async function main() {
@@ -7,12 +7,10 @@ async function main() {
     required(process.env, "DISCORD_TOKEN"),
   );
   const applicationId = required(process.env, "DISCORD_CLIENT_ID");
-  const guildId = required(process.env, "DISCORD_GUILD_ID");
-  // Upsert únicamente /radio: conserva otros comandos de la aplicación.
-  await rest.post(Routes.applicationGuildCommands(applicationId, guildId), {
-    body: radioCommand.toJSON(),
-  });
-  console.log("Comando /radio now registrado en el servidor de pruebas.");
+  await ensureGlobalRadioCommand(rest, applicationId);
+  console.log(
+    "Comandos /radio start, /radio stop y /radio now registrados globalmente para los servidores del bot.",
+  );
 }
 
 main().catch(() => {

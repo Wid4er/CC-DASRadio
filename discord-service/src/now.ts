@@ -14,7 +14,7 @@ export function formatNow(playback: Playback): string {
   // Limitar metadatos para respetar el tamaño máximo de un mensaje de Discord.
   const title = playback.track.title.slice(0, 600);
   const artist = playback.track.artist.slice(0, 600);
-  return `${title} — ${artist}\nEstado: ${states[playback.status]}. Punto guardado: ${Math.floor(playback.position_ms / 1000)} s.`;
+  return `${title} — ${artist}\nEstado: ${states[playback.status]}. Posición: ${Math.floor(playback.position_ms / 1000)} s.`;
 }
 
 export async function handleNow(

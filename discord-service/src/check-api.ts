@@ -10,7 +10,7 @@ async function main() {
     process.env.RADIO_SERVICE_URL ?? "http://radio-service:8000",
     required(process.env, "SERVICE_TOKEN"),
   );
-  console.log(formatNow(await radio.playback(stationId)));
+  console.log(formatNow(await radio.live(stationId)));
 }
 
 main().catch(() => {
