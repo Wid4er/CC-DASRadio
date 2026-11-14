@@ -2,6 +2,12 @@
 
 Interfaz interna de radio-service consumida por discord-service. El contrato se definió en el Hito 1 y sus seis rutas están implementadas en el primer incremento del Hito 2; véase la [guía local](desarrollo-local.md). No hay un despliegue público ni reproducción de voz validada. Control y metadatos usan JSON; el audio se devuelve como bytes. Identificadores de ejemplo y canciones son ficticios.
 
+El contrato original descrito a continuación es la referencia histórica del Hito 1. En el Hito 2 el controlador de radio-service avanza internamente la emisora; los clientes usan `/live` y las concesiones de escucha. `playing` indica que avanza ese reloj, no una confirmación audible de cada dispositivo. Los detalles actuales, intervalos y transiciones del intermedio están en la [guía de reproducción](reproduccion-compartida.md).
+
+## Ampliación del Hito 2
+
+El contrato original de las seis rutas se conserva como referencia del Hito 1. El incremento de voz añade [estado en directo y conexiones](reproduccion-compartida.md): `/live`, alta, renovación y salida de oyentes. El proveedor mantiene el reloj común para web y Discord. Mientras existan conexiones, los endpoints manuales de avance y progreso devuelven `409 playback_owned`; el avance automático pertenece al proveedor.
+
 ## Convenciones
 
 - Rutas bajo `/api/v1`, salvo `/health`.

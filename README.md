@@ -2,7 +2,17 @@
 
 Plataforma de radio musical automática para Discord. Una emisora selecciona aleatoriamente canciones de su catálogo y comparte la misma reproducción entre los servidores conectados.
 
-El nombre acordado es **CC-DASRadio**. El Hito 1 de definición y arquitectura está cerrado. El **Hito 2: empaquetado, entorno local e integración continua** tiene un primer incremento con API, PostgreSQL y un cliente Discord para `/radio now`. La [guía de desarrollo local](docs/desarrollo-local.md) explica cómo arrancar, configurar el bot y ejecutar las pruebas. El [plan del Hito 2](docs/hito-2.md) recoge el resto del trabajo; los apartados de reproducción siguientes describen el diseño previsto y todavía no acreditan reproducción de voz.
+El nombre acordado es **CC-DASRadio**. El Hito 1 de definición y arquitectura está cerrado. El **Hito 2: empaquetado, entorno local e integración continua** tiene un primer incremento con API, PostgreSQL, un cliente Discord y una web de escucha compartida sin credenciales externas. La [guía de desarrollo local](docs/desarrollo-local.md) explica cómo arrancar, configurar el bot y ejecutar las pruebas. El [plan del Hito 2](docs/hito-2.md) recoge el resto del trabajo; la [guía de reproducción compartida](docs/reproduccion-compartida.md) documenta el reloj central y los comandos de voz, distinguiendo implementación y prueba audible real.
+
+La reproducción tolera cinco segundos de desfase sin rebobinar. El proveedor introduce cinco segundos de silencio entre canciones para preparar y volver a anclar los clientes a la siguiente pista; véase la [guía de reproducción](docs/reproduccion-compartida.md).
+
+Consulta el [mapa de la estructura del proyecto](docs/estructura.md) para localizar los archivos, entender los módulos y ver cómo se comunican los servicios.
+
+**La web es una adición opcional para facilitar la corrección.** Discord sigue siendo la interfaz principal prevista del proyecto. El [tutorial para crear el bot](docs/configurar-discord.md) está disponible aunque se elija no configurarlo.
+
+Para probar la práctica sin crear una cuenta de desarrollador Discord, ejecutar `./scripts/start.sh` y abrir **http://127.0.0.1:8080**. El arranque genera `.env` con claves internas si falta e inicia **web-service, radio-service y PostgreSQL**. La [guía de evaluación web](docs/evaluacion-web.md) explica la escucha compartida entre pestañas, pausa y persistencia. Una instalación limpia incluye dos tonos WAV de prueba. La [guía de carga de música](docs/cargar-musica.md) permite añadir MP3 locales conservando el archivo comprimido.
+
+**Si `DISCORD_TOKEN`, `DISCORD_CLIENT_ID` y `DISCORD_GUILD_ID` están completos, `./scripts/start.sh` incluye automáticamente el bot.** Si faltan o contienen valores de ejemplo, arranca la web sin Discord. `--web-only` omite el bot, `--discord` exige su configuración y `--api-only` inicia solo API y base de datos. En Windows, [scripts/start.ps1](scripts/start.ps1) ofrece la misma detección y los modos `-WebOnly`, `-WithDiscord` y `-ApiOnly`. Al conectarse, el bot comprueba el registro global de `/radio`, disponible para todos los servidores donde se instala; no hay que configurar un ID distinto por servidor. La [guía local](docs/desarrollo-local.md) recoge todos los comandos.
 
 ## Problema y usuarios objetivo
 
@@ -21,7 +31,7 @@ Los usuarios objetivo son los participantes de comunidades de Discord y los admi
 - Pausa al desconectarse el último servidor y reanudación al conectarse el primero.
 - Conservación de canción, posición y estado para recuperar la reproducción tras reinicios.
 
-Quedan fuera del MVP la transcripción, la IA, YouTube, Spotify, el panel web, las recomendaciones complejas, varias emisoras, jingles y anuncios. Evitar repeticiones recientes será una mejora posterior: la selección aleatoria inicial puede repetir canciones.
+Quedan fuera del MVP la transcripción, la IA, YouTube, Spotify, el panel web de administración, las recomendaciones complejas, varias emisoras, jingles y anuncios. Evitar repeticiones recientes será una mejora posterior: la selección aleatoria inicial puede repetir canciones.
 
 Diamond City Radio de Fallout es una referencia posible de programación; el catálogo definitivo está pendiente de elegir y no se incluye todavía contenido musical en el repositorio.
 
@@ -63,15 +73,23 @@ La pausa depende de las conexiones de voz activas del bot, no del número de per
 
 ## Arquitectura inicial
 
+La [versión entregada del Hito 1](https://github.com/Wid4er/CC-DASRadio/tree/55c2c8e54b07857b4f50999aa83585ea186d1c3d) conserva el diseño de referencia. Los apartados siguientes describen su evolución implementada en el Hito 2; las decisiones se explican en la [guía de reproducción compartida](docs/reproduccion-compartida.md).
+
 ### discord-service
 
-Gestiona comandos y conexiones de voz y mantiene un reproductor común para la emisora, con varias conexiones suscritas. Recibe el audio desde `radio-service`, reproduce, informa del progreso y coordina pausa y reanudación.
+Gestiona `/radio start`, `/radio stop` y `/radio now`, las conexiones de voz y un reproductor común con varias conexiones suscritas. Recibe audio y posición actual desde `radio-service` y convierte el audio a Opus para Discord. El proveedor mantiene el reloj y decide avance, pausa y reanudación.
 
-Solo el controlador del reproductor común solicita el avance al finalizar una canción. Los servidores conectados no seleccionan canciones por separado. Este servicio no accede directamente a PostgreSQL.
+El controlador único de `radio-service` realiza el avance al finalizar una canción. Los servidores conectados no seleccionan canciones por separado. Este servicio no accede directamente a PostgreSQL.
+
+### web-service
+
+Cliente web de evaluación añadido en el Hito 2. Sirve la página y obtiene audio y posición actual a través de radio-service. Conserva la credencial interna en el servidor y no accede a PostgreSQL. La API cuenta las conexiones web y Discord: la última salida pausa y guarda; una nueva conexión reanuda desde ese punto.
+
+Esta ampliación permite evaluar la práctica sin Discord. Web y bot consumen una misma emisora del proveedor; no seleccionan canciones ni avanzan el reloj por separado.
 
 ### radio-service
 
-Gestiona catálogo, selección aleatoria y estado recuperable de la emisora. Es propietario de PostgreSQL y entrega los bytes del audio mediante su API. Recibe del reproductor las actualizaciones de posición y estado y no contiene lógica de conexión específica de Discord.
+Gestiona catálogo, selección aleatoria, reloj actual, conexiones y estado recuperable de la emisora. Es propietario de PostgreSQL y entrega metadatos, posición actual y bytes del audio mediante su API. No contiene lógica de conexión específica de Discord. El Hito 2 centraliza aquí el reloj que la primera web de evaluación mantenía temporalmente.
 
 ### PostgreSQL
 
@@ -92,13 +110,17 @@ flowchart LR
         CONTROL --> PLAYER
     end
 
+    BROWSER["Navegadores de evaluación"]
+    WEB["web-service · página y proxy"]
+    BROWSER -->|"HTTP y audio"| WEB
+    WEB -->|"REST y audio"| RADIO
     RADIO["radio-service · API y lógica de negocio"]
     DB[("PostgreSQL · catálogo, audio y estado recuperable")]
 
     USUARIO -->|"Comandos /radio"| DISCORD
     DISCORD -->|"Interacciones · Gateway"| CONTROL
     CONTROL -->|"HTTP REST · consultas"| RADIO
-    PLAYER -->|"HTTP REST · avance y progreso"| RADIO
+    PLAYER -->|"HTTP REST · sesión y posición actual"| RADIO
     RADIO -->|"HTTP · bytes de audio"| PLAYER
     RADIO <-->|"Protocolo PostgreSQL"| DB
     PLAYER -->|"Audio Opus · UDP/RTP + DAVE"| DISCORD
@@ -108,13 +130,13 @@ El audio procede de PostgreSQL a través de `radio-service`. No se devuelven URL
 
 ## Selección musical
 
-Al finalizar una canción, el controlador solicita una selección a `radio-service`. El servicio obtiene las canciones disponibles de la emisora, elige una aleatoriamente, actualiza la canción actual y devuelve sus metadatos. Se propone elegir con igual probabilidad. Un catálogo vacío impide el avance y devuelve un error explícito; un archivo que falle no se confirma como reproducido y no provoca un bucle ilimitado de selecciones.
+Al finalizar una canción, el controlador interno de `radio-service` realiza la selección. El servicio obtiene las canciones disponibles de la emisora, elige una aleatoriamente, actualiza la canción actual y devuelve sus metadatos. Se propone elegir con igual probabilidad. Un catálogo vacío impide el avance y devuelve un error explícito; un archivo que falle no se confirma como reproducido y no provoca un bucle ilimitado de selecciones.
 
-Seleccionar una canción no demuestra que se haya reproducido: el reproductor confirmará el inicio mediante una actualización de estado. El historial detallado y la exclusión de canciones recientes no son requisitos del MVP.
+En el Hito 2, playing expresa que avanza el reloj del proveedor; no acredita que cada cliente haya emitido audio. La comprobación del audio se hace también en los clientes y en las pruebas de reproducción. El historial detallado y la exclusión de canciones recientes no son requisitos del MVP.
 
 ## Persistencia y audio
 
-Modelo conceptual inicial, pendiente de restricciones y migraciones:
+Modelo definido en el Hito 1 e implementado mediante migraciones en el Hito 2:
 
 | Entidad | Campos principales |
 |---|---|
@@ -123,15 +145,15 @@ Modelo conceptual inicial, pendiente de restricciones y migraciones:
 | `TrackAudio` | `track_id`, `content_type`, `data` de tipo `bytea` |
 | `StationPlayback` | `station_id`, `current_track_id`, `position_ms`, `status`, `updated_at` |
 
-Separar audio y metadatos evita recuperar los binarios en consultas de catálogo. El formato de audio definitivo y los límites de archivo están pendientes de validación.
+Separar audio y metadatos evita recuperar los binarios en consultas de catálogo. La distribución incluye tonos WAV generados; el importador acepta MP3 de hasta 32 MiB y conserva sus bytes comprimidos. El bot convierte al vuelo a Opus para Discord.
 
-Al pausar se guarda la posición; durante la reproducción se guardarán puntos de recuperación periódicos, con intervalo pendiente de definir. Tras un reinicio se reconstruirá el reproductor desde el último punto guardado, aplicando búsqueda temporal o decodificación desde esa posición. La recuperación puede repetir un pequeño tramo si el proceso termina entre dos puntos de guardado.
+Al pausar se guarda la posición; durante la reproducción se guardan puntos de recuperación cada cinco segundos. Tras un reinicio se reconstruirá el reproductor desde el último punto guardado, aplicando búsqueda temporal o decodificación desde esa posición. La recuperación puede repetir un pequeño tramo si el proceso termina entre dos puntos de guardado.
 
-Las conexiones de voz deben reconstruirse desde Discord; el estado guardado no demuestra que sigan activas tras un reinicio. Las desconexiones detectadas retiran la conexión del recuento y aplican la regla de última conexión. Si falla el guardado, el punto queda en memoria y se informa; tras una caída solo se recupera el último guardado confirmado. La búsqueda temporal en el audio sigue pendiente de validación.
+Las conexiones de voz deben reconstruirse desde Discord; el estado guardado no demuestra que sigan activas tras un reinicio. Las desconexiones detectadas retiran la conexión del recuento y aplican la regla de última conexión. Si falla el guardado, el punto queda en memoria y se informa; tras una caída solo se recupera el último guardado confirmado. La búsqueda temporal está cubierta por las pruebas automatizadas y la evaluación web; sigue pendiente acreditar la escucha audible manual en Discord.
 
 ## API REST
 
-La [especificación REST](docs/api-rest.md) define entradas, respuestas, validaciones y errores. El contrato del Hito 1 está implementado en la API local del primer incremento del Hito 2; la reproducción de voz sigue pendiente.
+La [especificación REST](docs/api-rest.md) define entradas, respuestas, validaciones y errores. El contrato del Hito 1 está implementado y se amplía con [estado en directo y conexiones](docs/reproduccion-compartida.md).
 
 | Método y ruta | Entrada | Salida correcta |
 |---|---|---|
@@ -142,7 +164,7 @@ La [especificación REST](docs/api-rest.md) define entradas, respuestas, validac
 | `PATCH /api/v1/stations/{id}/playback` | JSON con canción, posición y estado. | `200` con estado actualizado y fecha de guardado. |
 | `GET /api/v1/tracks/{id}/audio` | ID de canción. | `200` con bytes y tipo de contenido del archivo. |
 
-Control utiliza JSON; el audio es binario, sin URLs de almacenamiento externo. Las operaciones, salvo health, utilizan una credencial interna propuesta; los usuarios siguen accediendo mediante los comandos de Discord.
+Control utiliza JSON; el audio es binario, sin URLs de almacenamiento externo. Las operaciones, salvo health, utilizan una credencial interna; los usuarios siguen accediendo mediante los comandos de Discord.
 
 Payload de avance:
 
@@ -201,9 +223,10 @@ Solo el controlador común realiza el avance. POST advance no se reintenta autom
 |---|---|---|
 | `discord-service` | Node.js, TypeScript, `discord.js` y `@discordjs/voice` | Un reproductor puede distribuir audio a varias conexiones de voz y pausar o reanudar. |
 | `radio-service` | Python y FastAPI | API de catálogo, programación y entrega de audio separada del cliente. |
+| `web-service` | Node.js y Web Audio en el navegador | Cliente de evaluación del proveedor compartido, sin cuenta Discord. |
 | Persistencia | PostgreSQL | Metadatos, binarios y estado recuperable en una misma base de datos. |
 
-El primer incremento fija Python 3.13, Node 24 y las dependencias de API y cliente mediante locks e imágenes por digest; véase la [guía local](docs/desarrollo-local.md). API, audio binario y estado persistido se han probado con PostgreSQL. Quedan por implementar y validar voz, DAVE, reproducción compartida y búsqueda temporal del reproductor; @discordjs/voice todavía no se incorpora a este cliente de consulta.
+El primer incremento fija Python 3.13, Node 24 y las dependencias de API y cliente mediante locks e imágenes por digest; véase la [guía local](docs/desarrollo-local.md). API, audio binario y estado persistido se han probado con PostgreSQL. Se incorporan @discordjs/voice 0.19.2, DAVE y FFmpeg para voz y búsqueda temporal; la validación automatizada y la escucha real se distinguen en la [guía de reproducción](docs/reproduccion-compartida.md).
 
 Referencias de diseño:
 
@@ -263,7 +286,7 @@ La [guía de contribución](CONTRIBUTING.md) define main estable, ramas feature/
 
 Están preparadas la [plantilla de historia de usuario](.github/ISSUE_TEMPLATE/user_story.md) y la [plantilla de Pull Request](.github/PULL_REQUEST_TEMPLATE.md). Las historias deben incluir criterios observables, tareas técnicas, etiqueta user-story y trazabilidad a los casos de uso.
 
-El [backlog](docs/backlog.md) contiene ocho historias como Issues reales, con la etiqueta user-story, criterios de aceptación y tareas técnicas. Las [tres tareas del Hito 1](https://github.com/Wid4er/CC-DASRadio/milestone/1) se agrupan en su milestone de definición y gestión. Las historias de funcionalidad permanecen abiertas y pendientes de implementación.
+El [backlog](docs/backlog.md) contiene ocho historias como Issues reales, con la etiqueta user-story, criterios de aceptación y tareas técnicas. Las [tres tareas del Hito 1](https://github.com/Wid4er/CC-DASRadio/milestone/1) se agrupan en su milestone de definición y gestión. Las historias de funcionalidad permanecen abiertas hasta verificar sus criterios completos, aunque el Hito 2 ya implementa parte de ellas.
 
 El [Project CC-DASRadio](https://github.com/users/Wid4er/projects/1/views/2) está activo con diecinueve Issues, una vista agrupada por Milestone y los estados Backlog, Ready, In Progress, In Review y Done. Conserva ocho historias funcionales abiertas y tres tareas cerradas del Hito 1. Las ocho tareas técnicas del [Hito 2](https://github.com/Wid4er/CC-DASRadio/milestone/2) enlazan esas historias sin duplicarlas.
 
@@ -273,4 +296,4 @@ La [PR #12](https://github.com/Wid4er/CC-DASRadio/pull/12) integró en main la d
 
 La entrega incluye definición y alcance, casos de uso formales, arquitectura, persistencia, API REST, NIST, análisis económico y configuración de la gestión en GitHub. La revisión documental verifica ejemplos JSON, enlaces locales, trazabilidad RF/CU y coherencia con el enunciado.
 
-El Hito 2 incorpora progresivamente la implementación. Quedan el catálogo definitivo, dependencias y formato de voz, límites de audio, intervalos de guardado, deduplicación y pruebas de reproducción y recuperación del reproductor. El primer incremento y sus instrucciones están en la [guía local](docs/desarrollo-local.md). Estas decisiones no implicaban entregar una radio funcional durante el Hito 1.
+El Hito 2 incorpora la implementación del proveedor común, voz Opus, importación MP3, web y recuperación persistente. Siguen pendientes el catálogo musical definitivo, la comprobación audible manual en Discord y las métricas completas. El [workflow y las imágenes GHCR](docs/ghcr.md) se vinculan a cada commit publicado. El primer incremento y sus instrucciones están en la [guía local](docs/desarrollo-local.md). Estas decisiones no implicaban entregar una radio funcional durante el Hito 1.

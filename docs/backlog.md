@@ -1,6 +1,6 @@
 # Backlog de CC-DASRadio
 
-Las historias del MVP están registradas como Issues reales, con criterios de aceptación, checklist técnico y etiqueta `user-story`. Siguen pendientes de implementación.
+Las historias del MVP están registradas como Issues reales, con criterios de aceptación, checklist técnico y etiqueta `user-story`. Su cierre se evalúa por criterios completos; parte de la implementación y de las pruebas se entrega en el Hito 2.
 
 ## Historias de producto
 
@@ -44,7 +44,7 @@ Estas tareas se asocian al milestone del Hito 1. Las historias de funcionalidad 
 | H2-06: CI y publicación en GHCR | [#19](https://github.com/Wid4er/CC-DASRadio/issues/19) |
 | H2-07: Documentación y verificación de entrega | [#20](https://github.com/Wid4er/CC-DASRadio/issues/20) |
 
-Las tareas tienen criterios de aceptación, checklist técnico y etiqueta hito-2. Enlazan las historias originales cuando corresponde; completarlas no cierra automáticamente esas historias. H2-00 se revisa mediante PR de planificación y H2-01 es la primera tarea de implementación preparada.
+Las tareas tienen criterios de aceptación, checklist técnico y etiqueta hito-2. Enlazan las historias originales cuando corresponde; completarlas no cierra automáticamente esas historias. H2-00 se entrega mediante la PR #21. La PR #22 incorpora el incremento ejecutable y enlaza las tareas #14–#20. Los estados actuales y evidencias de cierre se consultan en los issues y el Project.
 
 ## Tablero
 
