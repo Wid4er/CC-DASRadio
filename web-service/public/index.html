@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#131b19">
+  <title>DAS Radio · Escucha compartida</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" type="module"></script>
+  <script src="/navigation.js" type="module"></script>
+</head>
+<body>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="DAS Radio, inicio"><span class="brand-symbol" aria-hidden="true">◉</span> DAS RADIO<span class="brand-dot">.</span></a>
+    <nav class="site-nav" aria-label="Secciones de DAS Radio">
+      <a data-nav="radio" href="/">Escuchar</a>
+      <a data-nav="music" href="/ayuda/musica">Cargar música</a>
+      <a data-nav="discord" href="/ayuda/discord">Configurar Discord</a>
+    </nav>
+  </header>
+  <main>
+    <section data-page="radio" hidden aria-labelledby="radio-title">
+    <div class="eyebrow"><span class="signal" aria-hidden="true"></span> FRECUENCIA COMPARTIDA <span class="index">001 / WEB</span></div>
+    <div class="intro">
+      <h1 id="radio-title" tabindex="-1">Entra en<br>la misma <em>onda.</em></h1>
+      <p>Conecta y escucha lo que está sonando.<br>La música sigue su curso; tú te sumas al momento.</p>
+    </div>
+    </section>
+    <section class="player" aria-label="Reproductor de la emisora">
+      <div class="art" aria-hidden="true">
+        <span class="art-label">DAS / RADIO SESSIONS</span>
+        <div class="record"><div class="record-center"><span>DR</span><small>SIDE A</small></div></div>
+        <div class="art-caption"><span>EST. 2026</span><span>ESCUCHA EN COMÚN ↗</span></div>
+      </div>
+      <div class="player-body">
+        <div class="player-top"><span id="status" class="status">EN PAUSA</span><span class="live-dot" id="live-dot" aria-hidden="true"></span></div>
+        <div class="track-info" aria-live="polite">
+          <p class="overline">EN LA EMISORA</p>
+          <h2 id="title">Tu sitio está reservado.</h2>
+          <p id="artist">Pulsa conectar para empezar a escuchar.</p>
+        </div>
+        <div class="timeline"><div class="progress-track" role="progressbar" aria-label="Posición de la canción" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="progress"></span></div><div class="times"><span id="position">0:00</span><span id="duration">0:00</span></div></div>
+        <div class="controls"><button id="connect" type="button"><span id="button-icon" aria-hidden="true">▶</span><span id="button-label">Conectar y escuchar</span></button><label class="volume">Volumen<input id="volume" type="range" min="0" max="100" value="65" aria-label="Volumen local"></label></div>
+        <p class="feedback" id="feedback" role="status">No necesitas una cuenta de Discord.</p>
+      </div>
+    </section>
+    <div class="below-player"><span><span class="listener-dot" aria-hidden="true"></span><strong id="listeners">0</strong> <span id="listener-label">oyentes conectados</span></span><span class="shared-note">La misma canción y posición para todos.</span></div>
+    <div data-page="radio" hidden>
+    <details class="setup-help">
+      <summary>¿Quieres probar el bot? Configurar Discord es opcional.</summary>
+      <p>Esta web es una ayuda adicional para evaluar la emisora. Si el bot no está configurado o no conecta, puedes seguir escuchando aquí.</p>
+      <a class="guide-link" href="/ayuda/discord">Ver cómo crear y configurar el bot de Discord <span aria-hidden="true">↗</span></a>
+    </details>
+    <div class="catalog-help"><div><h3>Amplía el catálogo.</h3><p>Consulta cómo importar tus MP3, conservar sus metadatos y añadirlos a la emisora.</p></div><a class="guide-link" href="/ayuda/musica">Cómo cargar música <span aria-hidden="true">↗</span></a></div>
+    <section class="how-it-works" aria-label="Cómo funciona">
+      <article><span class="step">01</span><h3>Te sumas al directo.</h3><p>Al conectar entras en el punto actual de la emisora, también desde otra pestaña.</p></article>
+      <article><span class="step">02</span><h3>Escuchamos juntos.</h3><p>El volumen es tuyo. La canción y su recorrido los compartimos.</p></article>
+      <article><span class="step">03</span><h3>Volvemos al mismo sitio.</h3><p>Cuando sale el último oyente, la radio pausa y guarda su posición.</p></article>
+    </section>
+    <aside class="demo-note"><span class="note-tag">EDICIÓN DE PRUEBA</span><p>El catálogo de demostración contiene audio generado localmente. Puede haber pequeñas diferencias de escucha por la red y el navegador.</p></aside>
+    </div>
+    <!-- DISCORD_GUIDE -->
+    <!-- MUSIC_GUIDE -->
+  </main>
+  <footer><span>CC-DASRADIO</span><span>Hecho para compartir la escucha.</span><span>↗ RADIO SIN PRISAS</span></footer>
+</body>
+</html>

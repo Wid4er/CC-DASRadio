@@ -1,0 +1,48 @@
+<section class="guide-page" data-page="music" hidden aria-labelledby="music-title">
+  <div class="eyebrow"><span class="signal" aria-hidden="true"></span> GUÍA DEL CATÁLOGO</div>
+  <h1 id="music-title" tabindex="-1">Más música,<br>la misma <em>emisora.</em></h1>
+  <p class="guide-intro">Puedes añadir tus archivos MP3 desde el equipo donde ejecutas Docker. La web y el bot los reproducirán desde el mismo catálogo. Puedes consultar esta guía y la de Discord sin interrumpir la música.</p>
+  <a class="continue-link" href="/">Volver a escuchar →</a>
+
+  <section class="tutorial-step" aria-labelledby="music-files-title">
+    <span class="step">01</span>
+    <div><h2 id="music-files-title">Prepara los archivos</h2>
+      <p>Necesitas <strong>Docker, Python 3 y ffprobe</strong> en el equipo que realiza la carga. ffprobe forma parte de FFmpeg. Cada MP3 puede ocupar hasta <strong>32 MiB</strong>.</p>
+      <p>El importador extrae título, artista y duración. Revisa las etiquetas de tus MP3: si falta el título se usa el nombre del archivo; si falta el artista aparecerá «Artista desconocido».</p>
+      <p>Los archivos originales permanecen en su carpeta y el audio se conserva sin recodificar.</p>
+    </div>
+  </section>
+  <section class="tutorial-step" aria-labelledby="music-import-title">
+    <span class="step">02</span>
+    <div><h2 id="music-import-title">Importa una o varias canciones</h2>
+      <p>Abre una terminal en la carpeta <code>CC-DASRadio</code>. Sustituye la ruta del ejemplo por la de tu MP3:</p>
+      <pre><code>docker compose stop web-service discord-service
+docker compose up -d --build --wait radio-service
+python3 scripts/import-mp3.py "/ruta/a/cancion.mp3"
+docker compose up -d --force-recreate --wait radio-service
+./scripts/start.sh</code></pre>
+      <p>Este procedimiento detiene temporalmente la escucha durante el mantenimiento. Conserva el volumen de PostgreSQL y el catálogo existente. El último comando vuelve a iniciar la web y añade el bot si su configuración está completa.</p>
+      <p>Para cargar varios archivos, pasa sus rutas juntas en la orden de importación:</p>
+      <pre><code>python3 scripts/import-mp3.py "/ruta/primera.mp3" "/ruta/segunda.mp3"</code></pre>
+      <p>En Windows puedes usar <code>py -3</code> en lugar de <code>python3</code>. Para el último paso, ejecuta:</p>
+      <pre><code>powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\start.ps1</code></pre>
+    </div>
+  </section>
+  <section class="tutorial-step" aria-labelledby="music-storage-title">
+    <span class="step">03</span>
+    <div><h2 id="music-storage-title">Qué queda guardado</h2>
+      <p>El servicio de radio guarda en PostgreSQL los metadatos y, por separado, el archivo MP3 original comprimido. No lo convierte a audio en bruto ni a Base64.</p>
+      <p>Si vuelves a importar exactamente el mismo archivo en la misma emisora, no se duplica. La música queda en el volumen local de PostgreSQL; no se incorpora al repositorio ni a las imágenes Docker.</p>
+      <p>Al conectar, las canciones importadas entran en la selección aleatoria de la emisora; no necesariamente sonarán en primer lugar.</p>
+    </div>
+  </section>
+  <section class="tutorial-step" aria-labelledby="music-demo-title">
+    <span class="step">04</span>
+    <div><h2 id="music-demo-title">Si quieres sustituir los tonos de prueba</h2>
+      <p>Una instalación nueva incluye dos tonos generados localmente. Para desactivarlos al importar, añade <code>--replace-demo</code> en el paso de carga, con los clientes detenidos:</p>
+      <pre><code>python3 scripts/import-mp3.py --replace-demo "/ruta/a/cancion.mp3"</code></pre>
+      <p>Esta opción solo desactiva los dos tonos originales; conserva las canciones que ya hayas añadido. Si quieres ampliar el catálogo conservando los tonos, omite la opción.</p>
+      <a class="continue-link" href="/">Volver a la emisora →</a>
+    </div>
+  </section>
+</section>
