@@ -1,0 +1,18 @@
+{
+  "name": "cc-dasradio-web-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/server.mjs",
+    "lint": "biome check src public/app.js public/navigation.js test",
+    "test": "node --test test/*.test.mjs",
+    "test:integration": "node test/check-live.mjs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15"
+  }
+}

@@ -1,0 +1,60 @@
+  <section class="guide-page" data-page="discord" hidden aria-labelledby="discord-title">
+    <div class="eyebrow"><span class="signal" aria-hidden="true"></span> GUÍA OPCIONAL</div>
+    <h1 id="discord-title" tabindex="-1">La radio, también<br>en <em>Discord.</em></h1>
+    <p class="guide-intro">Discord es la interfaz principal prevista para el proyecto. La web es una ayuda adicional para la evaluación: puedes continuar escuchando sin crear una cuenta de desarrollador ni configurar un bot.</p>
+    <a class="continue-link" href="/">Continuar con la evaluación web →</a>
+
+    <section class="tutorial-step" aria-labelledby="create-title">
+      <span class="step">01</span>
+      <div><h2 id="create-title">Crea una aplicación</h2>
+        <p>Abre el <a href="https://discord.com/developers/applications" target="_blank" rel="noopener noreferrer">Discord Developer Portal ↗</a>, inicia sesión y pulsa <strong>New Application</strong>. Ponle un nombre, por ejemplo CC-DASRadio.</p>
+        <p>En <strong>General Information</strong>, copia <strong>Application ID</strong>: corresponde a <code>DISCORD_CLIENT_ID</code>.</p>
+      </div>
+    </section>
+    <section class="tutorial-step" aria-labelledby="token-title">
+      <span class="step">02</span>
+      <div><h2 id="token-title">Obtén el token del bot</h2>
+        <p>En <strong>Bot → Token → Reset Token</strong>, genera el token y cópialo directamente al archivo <code>.env</code> local, en <code>DISCORD_TOKEN</code>. El Client Secret de OAuth2 es otra credencial.</p>
+        <p class="token-note">Trata el token como una contraseña: no lo pegues en esta web, en el chat ni en Git. Si se expone, regénéralo en Discord. Esta página no solicita ni guarda credenciales.</p>
+        <p>Los comandos <code>/radio start</code>, <code>/radio stop</code> y <code>/radio now</code> funcionan sin activar los <strong>Privileged Gateway Intents</strong>. El campo <strong>Interactions Endpoint URL</strong> se deja vacío: este bot recibe las interacciones mediante su conexión a Discord.</p>
+      </div>
+    </section>
+    <section class="tutorial-step" aria-labelledby="install-title">
+      <span class="step">03</span>
+      <div><h2 id="install-title">Invítalo a tu servidor de pruebas</h2>
+        <p>En <strong>Installation</strong>, habilita <strong>Guild Install</strong> y selecciona <strong>Discord Provided Link</strong>. En los ajustes de Guild Install, añade los scopes <code>bot</code> y <code>applications.commands</code>.</p>
+        <p>Concede <strong>View Channels</strong>, <strong>Send Messages</strong>, <strong>Connect</strong> y <strong>Speak</strong> para la prueba. No hace falta Administrator. Abre el enlace de instalación y selecciona un servidor que puedas gestionar.</p>
+      </div>
+    </section>
+    <section class="tutorial-step" aria-labelledby="server-title">
+      <span class="step">04</span>
+      <div><h2 id="server-title">Completa la configuración local</h2>
+        <p>En Discord, activa <strong>Ajustes de usuario → Avanzado → Modo desarrollador</strong>. Haz clic derecho en el icono de tu servidor y selecciona <strong>Copiar ID del servidor</strong>. Ese valor es <code>DISCORD_GUILD_ID</code>; no es el ID del canal.</p>
+        <p>Edita únicamente los campos del bot en tu <code>.env</code> existente. Conserva las claves internas de PostgreSQL y la API:</p>
+        <pre><code>DISCORD_TOKEN=token_del_bot
+DISCORD_CLIENT_ID=id_de_la_aplicacion
+DISCORD_GUILD_ID=id_del_servidor</code></pre>
+      </div>
+    </section>
+    <section class="tutorial-step" aria-labelledby="launch-title">
+      <span class="step">05</span>
+      <div><h2 id="launch-title">Registra el comando y arranca</h2>
+        <p>En una terminal, desde la carpeta <code>CC-DASRadio</code>:</p>
+        <pre><code>docker compose build discord-service
+docker compose run --rm discord-service node dist/register-commands.js
+./scripts/start.sh --discord</code></pre>
+        <p>En Windows, sustituye la última línea por:</p>
+        <pre><code>powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\start.ps1 -WithDiscord</code></pre>
+        <p>El bot registra los comandos globalmente al conectar y los actualiza si cambian. Sirven en todos los servidores donde lo instales; no tienes que cambiar DISCORD_GUILD_ID para cada uno. Después escribe <code>/radio now</code> en un canal de texto. Para escuchar, entra en un canal de voz del servidor y ejecuta /radio start. Usa /radio stop para salir. Web y Discord comparten la emisora y su posición actual.</p>
+      </div>
+    </section>
+    <section class="tutorial-step" aria-labelledby="help-title">
+      <span class="step">06</span>
+      <div><h2 id="help-title">Si el bot no funciona, puedes continuar</h2>
+        <p>Consulta sus mensajes con <code>docker compose logs --tail=30 discord-service</code>. Si no aparece el comando, comprueba que la aplicación esté instalada con applications.commands, revisa el registro global en los logs y recarga Discord. Si no conecta, revisa el token y el acceso a Internet.</p>
+        <p>Para evaluar sin Discord, ejecuta <code>./scripts/start.sh --web-only</code>, o el script PowerShell con <code>-WebOnly</code>. Sin opciones, el lanzador incluye el bot si detecta el token y los dos IDs completos. La web, la API y PostgreSQL funcionan de forma independiente del bot.</p>
+        <a class="continue-link" href="/">Volver a escuchar en la web →</a>
+      </div>
+    </section>
+    <aside class="demo-note"><span class="note-tag">REFERENCIAS</span><p><a href="https://docs.discord.com/developers/quick-start/getting-started" target="_blank" rel="noopener noreferrer">Guía oficial de Discord ↗</a> · <a href="https://support-dev.discord.com/hc/en-us/articles/360028717192-Where-can-I-find-my-Application-Team-Server-ID" target="_blank" rel="noopener noreferrer">Cómo localizar los IDs ↗</a></p></aside>
+  </section>
